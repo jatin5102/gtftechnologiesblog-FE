@@ -8,6 +8,7 @@ import BlogSidebar from "@/components/BlogSidebar";
 import FAQAccordion from "@/components/Faqaccordion";
 import BlogCategorySlider from "@/components/utilities/BlogCategorySlider";
 import useFullUrl from "@/hooks/useFullUrl";
+import { absoluteUrl, blogPath } from "@/lib/urls";
 import he from "he";
 import parse from "html-react-parser";
 
@@ -118,9 +119,13 @@ const BlogDetails = ({
     }
   };
 
-  const canonicalUrl = blog?.category?.slug && blog?.slug 
-    ? `https://blog.gtftechnologies.com/${blog.category.slug}/${blog.slug}/`
-    : fullUrl;
+  const categoryPath = blogPath(blog?.category?.slug);
+  // Built from the post's own slugs so the canonical stays stable no matter
+  // which category path the visitor arrived through.
+  const canonicalUrl =
+    absoluteUrl(blogPath(blog?.category?.slug, blog?.slug)) || fullUrl;
+
+  const metaDescription = blog?.meta_description || blog?.short_description || "";
 
   return (
     <>
@@ -129,11 +134,13 @@ const BlogDetails = ({
           {blog?.meta_title ||
             "GTF Technologies: Leading Real Estate Digital Marketing Agency"}
         </title>
-        <meta name="description" content={blog?.meta_description || ""} />
-        <meta name="keywords" content={blog?.meta_keywords || ""} />
+        {/* Omit rather than emit empty tags — an empty description reads as a
+            missing description to crawlers. */}
+        {metaDescription && <meta name="description" content={metaDescription} />}
+        {blog?.meta_keywords && <meta name="keywords" content={blog.meta_keywords} />}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:url" content={canonicalUrl} />
+        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
         {renderHTMLTags(blog?.head_tags)}
       </Head>
       {renderHTMLTags(blog?.body_tags)}
@@ -215,12 +222,14 @@ const BlogDetails = ({
 
                       <div className="big-box-multiple">
                         <h4 className="main-heading">{blog?.category?.name}</h4>
-                        <Link href={`/${blog?.category?.slug}`}>
-                          <button className="btn btn-default btn-multi arrow_button">
-                            View All{" "}
-                            <img src="/assets/frontend/images/right-down.png" />{" "}
-                          </button>
-                        </Link>
+                        {categoryPath && (
+                          <Link href={categoryPath}>
+                            <button className="btn btn-default btn-multi arrow_button">
+                              View All{" "}
+                              <img src="/assets/frontend/images/right-down.png" alt="Right Arrow" />{" "}
+                            </button>
+                          </Link>
+                        )}
                       </div>
 
                       <BlogCategorySlider

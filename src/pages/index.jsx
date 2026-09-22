@@ -14,6 +14,12 @@ import Card from "@/components/utilities/Card";
 import BlogSidebar from "@/components/BlogSidebar";
 import { useRouter } from "next/router";
 import useFullUrl from "@/hooks/useFullUrl";
+import { blogPath } from "@/lib/urls";
+
+const HOME_TITLE = "GTF Technologies Blog — Real Estate Digital Marketing Tips";
+// Shared by the meta, OG and Twitter descriptions so the three can't drift apart.
+const HOME_DESCRIPTION =
+  "Explore GTF Technologies' blog for insights on real estate digital marketing, SEO, content strategies, and the latest industry trends.";
 
 const Blogs = ({ initialCategories, initialBlogs, initialTotalPages }) => {
 
@@ -111,7 +117,8 @@ const Blogs = ({ initialCategories, initialBlogs, initialTotalPages }) => {
     <>
       <Head>
         <meta name="google-site-verification" content="d2xfLBX0ojDABzk6iID4jN8WTINFqWhXyupGiOJouCA" />
-        <title>GTF Technologies Blog — Real Estate Digital Marketing Tips</title>
+        <title>{HOME_TITLE}</title>
+        <meta name="description" content={HOME_DESCRIPTION} />
         <meta name="keywords" content="real estate digital marketing, SEO tips, PPC strategies, branding insights, social media marketing, digital marketing blog, GTF Technologies blog, marketing trends" />
         <link rel="canonical" href="https://blog.gtftechnologies.com/" />
         <meta name="distribution" content="Global" />
@@ -128,15 +135,15 @@ const Blogs = ({ initialCategories, initialBlogs, initialTotalPages }) => {
         <meta name="expires" content="never" />
 
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="GTF Technologies Blog — Real Estate Digital Marketing Tips" />
-        <meta property="og:description" content="Explore key signs you might be overpaying for a 3 BHK in Whitefield — expert tips on pricing, value, space, and what to watch for when buying in East Bangalore." />
+        <meta property="og:title" content={HOME_TITLE} />
+        <meta property="og:description" content={HOME_DESCRIPTION} />
         <meta property="og:url" content="https://blog.gtftechnologies.com/" />
         <meta property="og:site_name" content="GTF Technologies" />
         <meta property="og:image" content="https://gtftechnologies.com/images/og_logo.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@GTFTechnologies" />
-        <meta name="twitter:title" content="GTF Technologies Blog — Real Estate Digital Marketing Tips" />
-        <meta name="twitter:description" content="Explore key signs you might be overpaying for a 3 BHK in Whitefield — expert tips on pricing, value, space, and what to watch for when buying in East Bangalore." />
+        <meta name="twitter:title" content={HOME_TITLE} />
+        <meta name="twitter:description" content={HOME_DESCRIPTION} />
         <meta name="twitter:creator" content="@GTFTechnologies" />
         <meta name="twitter:image" content="https://gtftechnologies.com/images/og_logo.jpg" />
         <script
@@ -189,8 +196,11 @@ const Blogs = ({ initialCategories, initialBlogs, initialTotalPages }) => {
                       <div className="big-box-multiple">
                         <h4 className="main-heading">{cat.name}</h4>
                         {
-                          cat.blogs.length >= 3 && (
-                            <Link href={`${cat.slug}`}><button className="btn btn-default btn-multi arrow_button">View All <img src="assets/frontend/images/right-down.png" /> </button></Link>
+                          // Absolute path, and skipped entirely when the slug is
+                          // missing — a relative href here resolved against the
+                          // current path and produced /undefined/... URLs.
+                          cat.blogs.length >= 3 && blogPath(cat.slug) && (
+                            <Link href={blogPath(cat.slug)}><button className="btn btn-default btn-multi arrow_button">View All <img src="/assets/frontend/images/right-down.png" alt="Right Arrow" /> </button></Link>
                           )
                         }
                       </div>

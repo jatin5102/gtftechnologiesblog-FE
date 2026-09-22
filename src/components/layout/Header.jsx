@@ -131,6 +131,7 @@ const Header = ({ onOpen }) => {
             <img
               className="brand-logo"
               src="/assets/images/gtflogo-vector.svg"
+              alt="GTF Logo"
             />
           </a>
 
@@ -406,19 +407,22 @@ const Header = ({ onOpen }) => {
               className="cursor-pointer"
             >
               {" "}
-              <img src="/assets/images/gtf-logo.svg" width="100%" />
+              <img src="/assets/images/gtf-logo.svg" width="100%" alt="GTF Logo" />
             </Link>
           </div>
         </div>
       </div>
-      <a
-        href="javascript:void(0)"
+      <button
+        type="button"
         id="nav-toggle"
         onClick={toggleNav}
         className={isOpen ? "active" : ""}
+        aria-label={isOpen ? "Close menu" : "Open menu"}
+        aria-expanded={isOpen}
+        aria-controls="mySidenav"
       >
         <span></span>
-      </a>
+      </button>
     </>
   );
 };

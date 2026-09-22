@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:seo": "node scripts/check-seo.mjs"
   },
   "dependencies": {
     "@fortawesome/react-fontawesome": "^3.3.0",

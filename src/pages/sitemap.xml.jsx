@@ -1,4 +1,5 @@
 import axios from "axios";
+import { SITE_URL } from "@/lib/urls";
 
 // Helper to escape XML special characters
 function escapeXml(unsafe) {
@@ -101,8 +102,8 @@ function SiteMap() {
 export async function getServerSideProps({ res }) {
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-blog.gtftechnologies.com/api/v1/";
-  const siteBaseUrl =
-    process.env.NEXT_BASE_URL || "https://blog.gtftechnologies.com/";
+  // Same origin the canonical tags use, so the sitemap can't disagree with them
+  const siteBaseUrl = process.env.NEXT_BASE_URL || SITE_URL;
 
   let categories = [];
   let blogs = [];

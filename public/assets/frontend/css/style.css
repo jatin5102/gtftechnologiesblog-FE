@@ -345,6 +345,12 @@ p {
   height: 20px;
   width: 35px;
   position: relative;
+  /* #nav-toggle is a <button> — strip the user-agent chrome so it renders
+     exactly as the old anchor did */
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 #nav-toggle span {

@@ -7,6 +7,7 @@ import Hero from "@/components/Hero";
 import Card from "@/components/utilities/Card";
 import SearchInput from "@/components/utilities/SearchInput";
 import useFullUrl from "@/hooks/useFullUrl";
+import { absoluteUrl, blogPath } from "@/lib/urls";
 
 const CategoryDetails = ({ initialCategory, initialBlogs }) => {
 
@@ -75,15 +76,15 @@ const CategoryDetails = ({ initialCategory, initialBlogs }) => {
     return formatted;
   }
 
-  const canonicalUrl = category?.slug ? `https://blog.gtftechnologies.com/${category.slug}/` : fullUrl;
+  const canonicalUrl = absoluteUrl(blogPath(category?.slug)) || fullUrl;
 
   return (
     <>
       <Head>
         <title>{category ? `${category.name} - GTF Technologies Blog` : "Blog Category - GTF Technologies"}</title>
         <meta name="description" content={`Explore articles and insights related to ${category?.name || "our blog categories"} at GTF Technologies.`} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:url" content={canonicalUrl} />
+        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"

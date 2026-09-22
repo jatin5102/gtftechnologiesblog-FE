@@ -2,7 +2,7 @@
 export default function CustomImage({
   src,
   mobileSrc,
-  alt,
+  alt = '',
   className = '',
   loading = 'lazy',
 }) {

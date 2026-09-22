@@ -31,7 +31,7 @@ const BlogCard = ({ data, detailsPage }) => {
                       <CustomImage
                         src={`${BASE_URL}${feature_image}`}
                         mobileSrc={`${BASE_URL}${mb_image}`}
-                        alt={alt}
+                        alt={alt || heading || "Blog image"}
                         className="object-cover rounded-[10px] w-full h-full"
                       />
       </div>

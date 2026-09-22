@@ -86,7 +86,7 @@ const Hero = ({
                         <div className="container">
                             <div className="col-sm-12">
                                 <div className="bread-banner">
-                                    <img src="/assets/frontend/images/breadcrumb.jpg" width="100%" />
+                                    <img src="/assets/frontend/images/breadcrumb.jpg" width="100%" alt="Blogs Image" />
                                 </div>
                             </div>
                         </div>

@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import axios from "axios";
+import Link from "next/link";
 import WebsiteInputFields from "./WebsiteInputFields";
+import { blogPath } from "@/lib/urls";
 
 const BlogSidebar = ({ filtercategories, data, checkCategories, handleCategoryToggle, filter, sectionRef }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,13 +129,20 @@ const BlogSidebar = ({ filtercategories, data, checkCategories, handleCategoryTo
                                 aria-labelledby="accordionHeadingTwo" aria-expanded="false" data-parent="accordion-popular">
                                 <div className="card-block col-12">
                                     <ul>
-                                        {blogs.map((blogitem, index) => (
-                                            <li key={index}>
-                                                <a className="text-capitalize" href={`/${blogitem.category.slug}/${blogitem.slug}`}>
-                                                    {blogitem.heading}
-                                                </a>
-                                            </li>
-                                        ))}
+                                        {blogs.map((blogitem, index) => {
+                                            // Skip posts missing a category or slug instead of
+                                            // linking to /undefined/... — `category` can be absent
+                                            // on the popular-posts payload.
+                                            const href = blogPath(blogitem?.category?.slug, blogitem?.slug);
+                                            if (!href) return null;
+                                            return (
+                                                <li key={blogitem?.id ?? index}>
+                                                    <Link className="text-capitalize" href={href}>
+                                                        {blogitem.heading}
+                                                    </Link>
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 </div>
                             </div>

@@ -7,7 +7,7 @@ const TeamCard = ({ data, className,animation="" }) => {
       <div  className={`w-32 h-32 mx-auto mb-4 relative  border-2 border-[var(--text-primary)] ${className}`}>
         <Image
           src={image}
-          alt={alt}
+          alt={alt || name || ""}
           fill
           className="object-cover"
         />
