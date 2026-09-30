@@ -61,7 +61,7 @@ const BlogSidebar = ({
         email: data.email,
         phone: data.phone,
         message: data.message,
-        lookingFor: "Blog Site"
+        lookingfor: "Blog Site"
       };
 
       await axios.post(
