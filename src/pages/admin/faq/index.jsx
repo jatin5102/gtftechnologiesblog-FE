@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 const BlogFaq = () => {
   const [pagedata, setPageData] = useState([]);
 
-  const [toc, setToc] = useState([]);
+  const [faq, setFaq] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -33,7 +33,7 @@ const BlogFaq = () => {
   const API_ADMIN_URL = process.env.NEXT_PUBLIC_API_ADMIN_URL;
   const router = useRouter();
   const { blog_id } = router.query;
-  const fetchTOC = async (page = 1) => {
+  const fetchFAQ = async (page = 1) => {
     try {
       if (!blog_id) {
         toast.error('Blog ID is required');
@@ -55,7 +55,7 @@ const BlogFaq = () => {
         };
       });
       const sortedList = [...listWithSort].sort((a, b) => Number(a.sort) - Number(b.sort));
-      setToc(sortedList);
+      setFaq(sortedList);
       setCurrentPage(data.pagination?.page || 1);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
@@ -76,40 +76,61 @@ const BlogFaq = () => {
   };
 
   const handleSeqChange = (id, newSort) => {
-    setToc((prev) =>
+    setFaq((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, sort: newSort } : item
       )
     );
   };
 
-  const handleSaveSingleSort = async (faq, newSort) => {
+  const handleSaveSingleSort = async (faqItem, newSort) => {
     const sortValue = Number(newSort);
     if (isNaN(sortValue) || sortValue < 1) {
       toast.error('Please enter a valid sequence number');
+      setFaq((prev) =>
+        prev.map((item) =>
+          item.id === faqItem.id ? { ...item, sort: item.originalSort } : item
+        )
+      );
       return;
     }
 
-    if (Number(faq.originalSort) === sortValue) {
+    if (Number(faqItem.originalSort) === sortValue) {
       return;
     }
 
-    setSavingId(faq.id);
+    setSavingId(faqItem.id);
     try {
       const res = await axiosAdmin.post(
-        `${API_ADMIN_URL}blog-faq/sort-faq/${faq.id}`,
+        `${API_ADMIN_URL}blog-faq/sort-faq/${faqItem.id}`,
         { sort: sortValue }
       );
 
       if (res && (res.data?.status || res.status === 200)) {
         toast.success(res.data?.message || 'Sequence updated successfully');
-        fetchTOC(currentPage);
+        setFaq((prev) =>
+          prev.map((item) =>
+            item.id === faqItem.id
+              ? { ...item, sort: sortValue, originalSort: sortValue }
+              : item
+          )
+        );
       } else {
         toast.error(res?.data?.message || 'Failed to update sequence');
+        setFaq((prev) =>
+          prev.map((item) =>
+            item.id === faqItem.id ? { ...item, sort: item.originalSort } : item
+          )
+        );
       }
     } catch (err) {
       console.error('Failed to update FAQ sequence:', err);
       toast.error(err.response?.data?.message || 'Failed to update sequence');
+      setFaq((prev) =>
+        prev.map((item) =>
+          item.id === faqItem.id ? { ...item, sort: item.originalSort } : item
+        )
+      );
     } finally {
       setSavingId(null);
     }
@@ -124,7 +145,7 @@ const BlogFaq = () => {
       );
       if (res.data.status) {
         toast.success('FAQ deleted successfully');
-        fetchTOC(currentPage);
+        fetchFAQ(currentPage);
       } else {
         toast.error('Failed to delete FAQ');
       }
@@ -137,7 +158,7 @@ const BlogFaq = () => {
 
   useEffect(() => {
     if (router.isReady && blog_id) {
-      fetchTOC(currentPage);
+      fetchFAQ(currentPage);
       fetchPageData(blog_id)
     }
   }, [currentPage, blog_id, router.isReady]);
@@ -160,7 +181,7 @@ const BlogFaq = () => {
 
             <div className="bg-white p-[40px]">
               <div className="flex items-center justify-between flex-wrap gap-4">
-                <h4>Faq's {pagedata?.heading ? <span className="text-sm font-normal text-gray-500">({pagedata.heading})</span> : ''}</h4>
+                <h4>Faq's</h4>
               </div>
 
               <div className="mt-[30px] overflow-auto">
@@ -176,8 +197,8 @@ const BlogFaq = () => {
                   </TableHead>
 
                   <TableBody>
-                    {toc.length > 0 ? (
-                      toc.map((blog, index) => {
+                    {faq.length > 0 ? (
+                      faq.map((blog, index) => {
                         const currentSeq =
                           blog.sort !== undefined && blog.sort !== null && blog.sort !== ''
                             ? blog.sort
@@ -196,6 +217,12 @@ const BlogFaq = () => {
                                   onBlur={(e) => {
                                     if (e.target.value !== '') {
                                       handleSaveSingleSort(blog, e.target.value);
+                                    } else {
+                                      setFaq((prev) =>
+                                        prev.map((item) =>
+                                          item.id === blog.id ? { ...item, sort: item.originalSort } : item
+                                        )
+                                      );
                                     }
                                   }}
                                   onKeyDown={(e) => {

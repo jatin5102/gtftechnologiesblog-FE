@@ -27,8 +27,9 @@ const BlogCategories = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState('');
-  const limit = 5;
-  const Thead = ['Name', 'Action'];
+  const [savingId, setSavingId] = useState(null);
+  const limit = 50;
+  const Thead = ['Seq', 'Name', 'Action'];
   const API_ADMIN_URL = process.env.NEXT_PUBLIC_API_ADMIN_URL;
   const router = useRouter();
   const { blog_id } = router.query;
@@ -44,12 +45,22 @@ const BlogCategories = () => {
       );
 
       const data = res.data;
-      setToc(data.data || []);
+      const rawList = data.data || [];
+      const listWithSort = rawList.map((item, index) => {
+        const initial = item.sort ?? item.seq ?? item.sequence ?? (index + 1);
+        return {
+          ...item,
+          sort: initial,
+          originalSort: initial,
+        };
+      });
+      const sortedList = [...listWithSort].sort((a, b) => Number(a.sort) - Number(b.sort));
+      setToc(sortedList);
       setCurrentPage(data.pagination?.page || 1);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to fetch blogs');
+      toast.error('Failed to fetch TOC');
     }
   };
 
@@ -60,22 +71,83 @@ const BlogCategories = () => {
         setPageData(res.data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
+      console.error("Failed to fetch blog details:", error);
+    }
+  };
+
+  const handleSeqChange = (id, newSort) => {
+    setToc((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, sort: newSort } : item
+      )
+    );
+  };
+
+  const handleSaveSingleSort = async (tocItem, newSort) => {
+    const sortValue = Number(newSort);
+    if (isNaN(sortValue) || sortValue < 1) {
+      toast.error('Please enter a valid sequence number');
+      setToc((prev) =>
+        prev.map((item) =>
+          item.id === tocItem.id ? { ...item, sort: item.originalSort } : item
+        )
+      );
+      return;
+    }
+
+    if (Number(tocItem.originalSort) === sortValue) {
+      return;
+    }
+
+    setSavingId(tocItem.id);
+    try {
+      const res = await axiosAdmin.post(
+        `${API_ADMIN_URL}blog-toc/sort-toc/${tocItem.id}`,
+        { seq: sortValue }
+      );
+
+      if (res && (res.data?.status || res.status === 200)) {
+        toast.success(res.data?.message || 'Sequence updated successfully');
+        setToc((prev) =>
+          prev.map((item) =>
+            item.id === tocItem.id
+              ? { ...item, sort: sortValue, originalSort: sortValue }
+              : item
+          )
+        );
+      } else {
+        toast.error(res?.data?.message || 'Failed to update sequence');
+        setToc((prev) =>
+          prev.map((item) =>
+            item.id === tocItem.id ? { ...item, sort: item.originalSort } : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update TOC sequence:', err);
+      toast.error(err.response?.data?.message || 'Failed to update sequence');
+      setToc((prev) =>
+        prev.map((item) =>
+          item.id === tocItem.id ? { ...item, sort: item.originalSort } : item
+        )
+      );
+    } finally {
+      setSavingId(null);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!confirm('Are you sure you want to delete this TOC?')) return;
 
     try {
       const res = await axiosAdmin.delete(
         `${API_ADMIN_URL}blog-toc/${id}`
       );
       if (res.data.status) {
-        toast.success('Toc deleted successfully');
+        toast.success('TOC deleted successfully');
         fetchTOC(currentPage);
       } else {
-        toast.error('Failed to delete category');
+        toast.error('Failed to delete TOC');
       }
     } catch (err) {
       console.error(err);
@@ -87,7 +159,7 @@ const BlogCategories = () => {
   useEffect(() => {
     if (router.isReady && blog_id) {
       fetchTOC(currentPage);
-      fetchPageData(blog_id)
+      fetchPageData(blog_id);
     }
   }, [currentPage, blog_id, router.isReady]);
 
@@ -115,49 +187,95 @@ const BlogCategories = () => {
                   <TableHead>
                     <TableRow>
                       {Thead.map((item, index) => (
-                        <TableHeader key={index}>{item}</TableHeader>
+                        <TableHeader key={index} className={item === 'Seq' ? 'w-[120px]' : undefined}>
+                          {item}
+                        </TableHeader>
                       ))}
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
                     {toc.length > 0 ? (
-                      toc.map((blog) => (
-                        <TableRow key={blog._id}>
-                          <TableData heading={blog.title && blog.title.length > 110 ? blog.title : undefined}>
-                            {blog.title && blog.title.length > 110
-                              ? `${blog.title.slice(0, 110)}...`
-                              : blog.title}
-                          </TableData>
+                      toc.map((blog, index) => {
+                        const currentSeq =
+                          blog.sort !== undefined && blog.sort !== null && blog.sort !== ''
+                            ? blog.sort
+                            : index + 1;
 
-                          <TableData>
-                            <div className="w-full flex items-center justify-center gap-[10px]">
-                              <Link
-                                href={`/admin/toc/edit/?id=${blog.id}`}
-                                className="hover:bg-[#ecebeb] inline-block  p-[10px] rounded-[5px]"
-                              >
-                                <Image
-                                  src="/assets/icons/edit.webp"
-                                  alt="Edit icon"
-                                  width={20}
-                                  height={20}
+                        return (
+                          <TableRow key={blog.id || blog._id || index}>
+                            <TableData className="w-[120px]">
+                              <div className="relative inline-flex items-center justify-center">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  disabled={savingId === blog.id}
+                                  value={currentSeq}
+                                  onChange={(e) => handleSeqChange(blog.id, e.target.value)}
+                                  onBlur={(e) => {
+                                    if (e.target.value !== '') {
+                                      handleSaveSingleSort(blog, e.target.value);
+                                    } else {
+                                      setToc((prev) =>
+                                        prev.map((item) =>
+                                          item.id === blog.id ? { ...item, sort: item.originalSort } : item
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.target.blur();
+                                    }
+                                  }}
+                                  className="w-[70px] mx-auto text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--text-primary)] disabled:bg-gray-100 disabled:opacity-60"
                                 />
-                              </Link>
-                              <button
-                                onClick={() => handleDelete(blog.id)}
-                                className="hover:bg-[#ecebeb] p-[10px] rounded-[5px]"
-                              >
-                                <Image
-                                  src="/assets/icons/delete.webp"
-                                  alt="Delete Icon "
-                                  width={20}
-                                  height={20}
-                                />
-                              </button>
-                            </div>
-                          </TableData>
-                        </TableRow>
-                      ))
+                                {savingId === blog.id && (
+                                  <span className="absolute -right-5 top-1/2 -translate-y-1/2 flex items-center" title="Saving...">
+                                    <svg className="animate-spin h-3.5 w-3.5 text-[var(--text-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" stroke="currentColor"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                  </span>
+                                )}
+                              </div>
+                            </TableData>
+
+                            <TableData heading={blog.title && blog.title.length > 110 ? blog.title : undefined}>
+                              {blog.title && blog.title.length > 110
+                                ? `${blog.title.slice(0, 110)}...`
+                                : blog.title}
+                            </TableData>
+
+                            <TableData>
+                              <div className="w-full flex items-center justify-center gap-[10px]">
+                                <Link
+                                  href={`/admin/toc/edit/?id=${blog.id}`}
+                                  className="hover:bg-[#ecebeb] inline-block  p-[10px] rounded-[5px]"
+                                >
+                                  <Image
+                                    src="/assets/icons/edit.webp"
+                                    alt="Edit icon"
+                                    width={20}
+                                    height={20}
+                                  />
+                                </Link>
+                                <button
+                                  onClick={() => handleDelete(blog.id)}
+                                  className="hover:bg-[#ecebeb] p-[10px] rounded-[5px]"
+                                >
+                                  <Image
+                                    src="/assets/icons/delete.webp"
+                                    alt="Delete Icon "
+                                    width={20}
+                                    height={20}
+                                  />
+                                </button>
+                              </div>
+                            </TableData>
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableData colSpan={Thead.length} className="text-center">
