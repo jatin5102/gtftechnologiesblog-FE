@@ -3,9 +3,9 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import Card from "@/components/utilities/Card";
 import BlogSidebar from "@/components/BlogSidebar";
 import FAQAccordion from "@/components/Faqaccordion";
+import BlogTOC from "@/components/BlogTOC";
 import BlogCategorySlider from "@/components/utilities/BlogCategorySlider";
 import useFullUrl from "@/hooks/useFullUrl";
 import { absoluteUrl, blogPath } from "@/lib/urls";
@@ -28,7 +28,6 @@ const BlogDetails = ({
   );
   const [popularBlogs, setPopularBlogs] = useState(initialPopularBlogs);
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const [tocDescription, setTocDescription] = useState("");
   const fullUrl = useFullUrl();
 
   const router = useRouter();
@@ -187,35 +186,7 @@ const BlogDetails = ({
                           }}
                         />
 
-                        {blog?.toc && blog?.toc.length > 0 && (
-                          <>
-                            <div className="inner-d-box">
-                              <h3>Table of Contents</h3>
-                              <ul className="toc-list">
-                                {blog?.toc?.map((item, index) => (
-                                  <li key={index}>
-                                    <a href={`#${item.slug}`}>
-                                      {item.toc_heading}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            {blog?.toc?.map((item, index) => (
-                              <React.Fragment key={index}>
-                                <div id={item.slug}>
-                                  <h2 className="main-heading">{item.title}</h2>
-                                  <p
-                                    className="para-details"
-                                    dangerouslySetInnerHTML={{
-                                      __html: item?.description,
-                                    }}
-                                  />
-                                </div>
-                              </React.Fragment>
-                            ))}
-                          </>
-                        )}
+                        <BlogTOC blog_id={blog?.id} />
                       </div>
 
                       <FAQAccordion blog_id={blog?.id} />
